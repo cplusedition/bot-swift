@@ -26,7 +26,7 @@ the test run when the test suite contains more than one test using a
 XCTestObservation. See BuilderBase.swift in the BotKitBuild project
 for an example.
 
-**NOTE** Your builder should derive from both XCTestCase and IBuilder.
+**NOTE** Your builder should extends XCTestCase and implements IBasicBuilder.
 See BuilderBase.swft in the BotKitBuild project for an example.
 
 **NOTE** This is not a full-fledged build system or a library for standalone 
