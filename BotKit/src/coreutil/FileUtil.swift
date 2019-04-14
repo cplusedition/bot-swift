@@ -29,13 +29,13 @@ public protocol FilePathCollectorProtocol {
 }
 
 public extension FilePathCollectorProtocol {
-    public func files(_ includes: IFilePathPredicate? = nil) -> MySeq<Element> {
+    func files(_ includes: IFilePathPredicate? = nil) -> MySeq<Element> {
         return collect { file, rpath in
             return file.isFile && (includes?(file, rpath) ?? true)
         }
     }
     
-    public func dirs(_ includes: IFilePathPredicate? = nil) -> MySeq<Element> {
+    func dirs(_ includes: IFilePathPredicate? = nil) -> MySeq<Element> {
         return collect { file, rpath in
             return file.isDirectory && (includes?(file, rpath) ?? true)
         }
@@ -314,32 +314,36 @@ public struct File: Comparable, Hashable {
         return _path.hashValue
     }
     
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(_path)
+    }
+    
     public var description: String {
         return _path
     }
 }
 
 public extension File {
-    public var existsOrNull: File? {
+    var existsOrNull: File? {
         return exists ? self : nil
     }
     
-    public func mkparentOrThrow() throws -> File {
+    func mkparentOrThrow() throws -> File {
         guard let ret = mkparent() else { throw IOException(self.path) }
         return ret
     }
 }
 
 public extension File {
-    public func setPrivatePerm() -> Bool {
+    func setPrivatePerm() -> Bool {
         return isDirectory ? setPerm(0b111_000_000) : setPerm(0b110_000_000)
     }
     
-    public func setPublicPerm() -> Bool {
+    func setPublicPerm() -> Bool {
         return isDirectory ? setPerm(0b111_101_101) : setPerm(0b110_100_100)
     }
     
-    public func setReadable(_ user: Bool?, _ group: Bool?, _ other: Bool?) -> Bool {
+    func setReadable(_ user: Bool?, _ group: Bool?, _ other: Bool?) -> Bool {
         do {
             let attrs = try FileManager.default.attributesOfItem(atPath: _path)
             var perm = attrs[FileAttributeKey.posixPermissions] as! Int
@@ -359,7 +363,7 @@ public extension File {
         }
     }
     
-    public func setWritable(_ user: Bool?, _ group: Bool?, _ other: Bool?) -> Bool {
+    func setWritable(_ user: Bool?, _ group: Bool?, _ other: Bool?) -> Bool {
         do {
             let attrs = try FileManager.default.attributesOfItem(atPath: _path)
             var perm = attrs[FileAttributeKey.posixPermissions] as! Int
@@ -379,7 +383,7 @@ public extension File {
         }
     }
     
-    public func setExcludeFromBackup(_ exclude: Bool) -> Bool {
+    func setExcludeFromBackup(_ exclude: Bool) -> Bool {
         do {
             try NSURL(fileURLWithPath: self.path).setResourceValue(exclude, forKey: URLResourceKey.isExcludedFromBackupKey)
             return true
@@ -388,7 +392,7 @@ public extension File {
         }
     }
     
-    public func isExcludedFromBackup() -> Bool? {
+    func isExcludedFromBackup() -> Bool? {
         do {
             var ret: Bool? = nil
             //# NOTE: This seems to always return false in simulator.
@@ -402,7 +406,7 @@ public extension File {
 
 /// Content access functions
 public extension File {
-    public func readText(_ encoding: String.Encoding = .utf8) throws -> String {
+    func readText(_ encoding: String.Encoding = .utf8) throws -> String {
         do {
             return try String(contentsOfFile: self.path, encoding: encoding)
         } catch let e {
@@ -410,42 +414,42 @@ public extension File {
         }
     }
     
-    public func readLines(_ encoding: String.Encoding = .utf8) throws -> Array<String> {
+    func readLines(_ encoding: String.Encoding = .utf8) throws -> Array<String> {
         return try readText(encoding).lines
     }
     
-    public func readData() throws -> Data {
+    func readData() throws -> Data {
         if let data = FileManager.default.contents(atPath: self.path) {
             return data
         }
         throw IOException(self.path)
     }
     
-    public func readBytes() throws -> [UInt8] {
+    func readBytes() throws -> [UInt8] {
         if let data = FileManager.default.contents(atPath: self.path) {
             return Array(data)
         }
         throw IOException(self.path)
     }
 
-    public func writeData(_ data: Data, _ attributes: [FileAttributeKey : Any]? = nil) throws {
+    func writeData(_ data: Data, _ attributes: [FileAttributeKey : Any]? = nil) throws {
         if !FileManager.default.createFile(atPath: self.path, contents: data, attributes: attributes) {
             throw IOException(self.path)
         }
     }
 
-    public func writeBytes(_ bytes: [UInt8], _ attributes: [FileAttributeKey : Any]? = nil) throws {
+    func writeBytes(_ bytes: [UInt8], _ attributes: [FileAttributeKey : Any]? = nil) throws {
         try writeData(Data(bytes), attributes)
     }
     
-    public func writeText(_ text: String, _ encoding: String.Encoding = .utf8, _ attributes: [FileAttributeKey : Any]? = nil) throws {
+    func writeText(_ text: String, _ encoding: String.Encoding = .utf8, _ attributes: [FileAttributeKey : Any]? = nil) throws {
         guard let data = text.data(using: encoding) else {
             throw CharacterEncodingException(self.path)
         }
         try writeData(data, attributes)
     }
     
-    public func writeLines(_ lines: [String], _ encoding: String.Encoding = .utf8, _ attributes: [FileAttributeKey : Any]? = nil) throws {
+    func writeLines(_ lines: [String], _ encoding: String.Encoding = .utf8, _ attributes: [FileAttributeKey : Any]? = nil) throws {
         try writeText(lines.joinln(), encoding, attributes)
     }
 }
@@ -453,14 +457,14 @@ public extension File {
 public extension File {
     /// @return true if destination not exists or delete is successful.
     @discardableResult
-    public func deleteTree() -> Bool {
+    func deleteTree() -> Bool {
         /// NOTE that macos and iOS delete non-empty directories.
         return self.delete()
     }
     
     /// @return true if destination not exist or delete is successful.
     @discardableResult
-    public func deleteSubtrees() -> Bool {
+    func deleteSubtrees() -> Bool {
         guard exists else { return true }
         guard isDirectory else { return false }
         var ok = true
@@ -472,7 +476,7 @@ public extension File {
         return ok
     }
     
-    public func deleteEmptySubtrees() {
+    func deleteEmptySubtrees() {
         for file in listFiles() {
             if file.isDirectory {
                 file.deleteEmptyTree()
@@ -480,7 +484,7 @@ public extension File {
         }
     }
     
-    public func deleteEmptyTree() {
+    func deleteEmptyTree() {
         deleteEmptySubtrees()
         if listOrEmpty().isEmpty {
             _ = delete()
@@ -489,8 +493,8 @@ public extension File {
 }
 
 public extension File {
-    public var walker: Treewalker { return Treewalker(self) }
-    public var walker1: Treewalker1 { return Treewalker1(self) }
+    var walker: Treewalker { return Treewalker(self) }
+    var walker1: Treewalker1 { return Treewalker1(self) }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -668,7 +672,7 @@ public class FileUtil {
 /// Attribute utilities
 public extension FileUtil {
     /// @return true if item exists and is a regular file.
-    public static func isFile(path: String) -> Bool {
+    static func isFile(path: String) -> Bool {
         do {
             let attributes = try FileManager.default.attributesOfItem(atPath: path)
             return attributes[FileAttributeKey.type] as! FileAttributeType == FileAttributeType.typeRegular
@@ -678,14 +682,14 @@ public extension FileUtil {
     }
     
     /// @return true if item exists and is a directory.
-    public static func isDirectory(path: String) -> Bool {
+    static func isDirectory(path: String) -> Bool {
         var ret: ObjCBool = false
         FileManager.default.fileExists(atPath: path, isDirectory: &ret)
         return ret.boolValue
     }
     
     /** @return false If any operation fail. */
-    public static func setPrivateDirPerm(_ dirs: File...) -> Bool {
+    static func setPrivateDirPerm(_ dirs: File...) -> Bool {
         var ok = true
         for dir in dirs {
             if dir.exists && dir.isDirectory {
@@ -698,7 +702,7 @@ public extension FileUtil {
     }
     
     /** @return false If any operation fail. */
-    public static func setPrivateFilePerm(_ files: File...) -> Bool {
+    static func setPrivateFilePerm(_ files: File...) -> Bool {
         var ok = true
         for file in files {
             if file.exists && file.isFile {
@@ -711,7 +715,7 @@ public extension FileUtil {
     }
     
     /** @return false If any operation fail. */
-    public static func excludeFromBackup(_ files: [File]) -> Bool {
+    static func excludeFromBackup(_ files: [File]) -> Bool {
         var ok = true
         for file in files {
             if !file.setExcludeFromBackup(true) {
@@ -721,11 +725,11 @@ public extension FileUtil {
         return ok
     }
     
-    public static func touch(dir: File, ms: Int64 = DateUtil.ms) -> Bool {
+    static func touch(dir: File, ms: Int64 = DateUtil.ms) -> Bool {
         return touch(dir: dir, date: Date(ms: ms))
     }
     
-    public static func touch(dir: File, date: Date = Date()) -> Bool {
+    static func touch(dir: File, date: Date = Date()) -> Bool {
         var ok = true
         if dir.isDirectory {
             dir.walker1.walk {
@@ -744,7 +748,7 @@ public extension FileUtil {
 /// File diff methods
 public extension FileUtil {
     /// Returns true if the two files differ.
-    public static func diff(_ file1: File, _ file2: File) throws -> Bool {
+    static func diff(_ file1: File, _ file2: File) throws -> Bool {
         let input1 = try FileUtil.openInputStream(file1)
         defer { input1.close() }
         let input2 = try FileUtil.openInputStream(file2)
@@ -752,7 +756,7 @@ public extension FileUtil {
         return try diff(input1, input2)
     }
     
-    public static func diff(_ input1: IInputStream, _ input2: IInputStream) throws -> Bool {
+    static func diff(_ input1: IInputStream, _ input2: IInputStream) throws -> Bool {
         let len = ByteIOUtil.K.BUFSIZE4
         let buf1 = [UInt8](repeating: 0, count: len)
         let buf2 = [UInt8](repeating: 0, count: len)
@@ -792,7 +796,7 @@ public extension FileUtil {
     /**
      * Diff files, ignoring empty directories, in the given directories.
      */
-    public static func diffDir(_ dir1: File, _ dir2: File) throws -> DiffStat<String> {
+    static func diffDir(_ dir1: File, _ dir2: File) throws -> DiffStat<String> {
         let stat = DiffStat<String>()
         try dir1.walker.files { file1, rpath in
             let file2 = File(dir2, rpath)
@@ -811,7 +815,7 @@ public extension FileUtil {
 }
 
 public extension FileUtil {
-    public static func documentUrl(_ rpath: String? = nil) -> URL {
+    static func documentUrl(_ rpath: String? = nil) -> URL {
         do {
             let docurl = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
             return (rpath == nil) ? docurl : docurl.appendingPathComponent(rpath!)
@@ -825,7 +829,7 @@ public extension FileUtil {
 public extension FileUtil {
     
     /// @return An unique and created tmp directory.
-    public static func createTempDir(dir: File? = nil) -> File {
+    static func createTempDir(dir: File? = nil) -> File {
         return FileUtil.queue.sync {
             let dir = dir ?? File.TMPDIR
             var ret: File
@@ -846,7 +850,7 @@ public extension FileUtil {
     }
     
     /// @return A temp file that does not exists yet.
-    public static func tempFile(suffix: String = ".tmp", dir: File? = nil) -> File {
+    static func tempFile(suffix: String = ".tmp", dir: File? = nil) -> File {
         return FileUtil.queue.sync {
             let dir = dir ?? File.TMPDIR
             var ret: File

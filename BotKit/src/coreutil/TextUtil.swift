@@ -296,6 +296,10 @@ public struct Basepath: Hashable {
     public var hashValue: Int {
         return path.hashValue
     }
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(path)
+    }
 
     /// Split path into directory and filename components.
     public static func splitDirName(_ path: String) -> (dir: String?, name: String) {

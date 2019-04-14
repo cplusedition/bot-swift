@@ -116,14 +116,14 @@ public protocol IBuilder {
      * @return The result of run().
      */
     @discardableResult
-    func task<T>(_ task: T) -> T.Result where T: ICoreTask
+    func task<T>(_ task: T) -> T.R where T: ICoreTask
 
     /**
      * Setup and run the given task.
      * @return The result of run().
      */
     @discardableResult
-    func task<T>(_ task: T) -> T.Result where T: IBuilderTask
+    func task<T>(_ task: T) -> T.R where T: IBuilderTask
 }
 
 public protocol IBasicBuilder : IBuilder {}
@@ -179,13 +179,13 @@ extension IBasicBuilder {
     }
     
     @discardableResult
-    public func task<T>(_ task: T) -> T.Result where T: ICoreTask {
+    public func task<T>(_ task: T) -> T.R where T: ICoreTask {
         task.log = log
         return task.run()
     }
     
     @discardableResult
-    public func task<T>(_ task: T) -> T.Result where T: IBuilderTask {
+    public func task<T>(_ task: T) -> T.R where T: IBuilderTask {
         task.builder = self
         return task.run()
     }
@@ -366,31 +366,31 @@ public protocol ITestBuilder: IBasicBuilder {
 
 public extension ITestBuilder {
 
-    public func subtest(_ msg: String? = nil, _ test: @escaping Fun00x) throws {
+    func subtest(_ msg: String? = nil, _ test: @escaping Fun00x) throws {
         try log.enterX(msg) {
             try test()
         }
     }
     
-    public func subtest(_ msg: String? = nil, _ test: @escaping Fun00) {
+    func subtest(_ msg: String? = nil, _ test: @escaping Fun00) {
         log.enter(msg) {
             test()
         }
     }
     
-    public func tmpDir() -> File {
+    func tmpDir() -> File {
         return FileUtil.createTempDir(dir: tmpdir)
     }
     
-    public func tmpFile(suffix: String = ".tmp", dir: File? = nil) -> File {
+    func tmpFile(suffix: String = ".tmp", dir: File? = nil) -> File {
         return FileUtil.tempFile(suffix: suffix, dir: dir ?? tmpdir)
     }
 
-    public var testResDir: File {
+    var testResDir: File {
         return File(testResPath(nil))
     }
     
-    public func testResData(_ rpath: String? = nil) throws -> Data {
+    func testResData(_ rpath: String? = nil) throws -> Data {
         guard let data = FileManager.default.contents(atPath: testResPath(rpath)) else {
             throw IOException(rpath)
         }

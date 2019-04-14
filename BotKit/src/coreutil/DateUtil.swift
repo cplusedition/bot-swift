@@ -56,44 +56,44 @@ public struct USDateFormatter {
 }
 
 public extension Date {
-    public var rfc1123: String {
+    var rfc1123: String {
         return RFC1123.shared.formatter.string(from: self)
     }
     
-    public init?(rfc1123: String) {
+    init?(rfc1123: String) {
         guard let date = RFC1123.shared.formatter.date(from: rfc1123) else {
             return nil
         }
         self = date
     }
     
-    public var rfc822: String {
+    var rfc822: String {
         return RFC822.shared.formatter.string(from: self)
     }
     
-    public init?(rfc822: String) {
+    init?(rfc822: String) {
         guard let date = RFC822.shared.formatter.date(from: rfc822) else {
             return nil
         }
         self = date
     }
     
-    public var iso8601: String {
+    var iso8601: String {
         return ISO8601.shared.formatter.string(from: self)
     }
     
-    public init?(iso8601: String) {
+    init?(iso8601: String) {
         guard let date = ISO8601.shared.formatter.date(from: iso8601) else {
             return nil
         }
         self = date
     }
     
-    public var enUS: String {
+    var enUS: String {
         return USDateFormatter.shared.formatter.string(from: self)
     }
     
-    public init?(enUS: String) {
+    init?(enUS: String) {
         guard let date = USDateFormatter.shared.formatter.date(from: enUS) else {
             return nil
         }

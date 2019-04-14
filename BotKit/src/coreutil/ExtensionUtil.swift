@@ -16,23 +16,35 @@
  */
 
 public extension Int {
-    public var isOdd: Bool {
+    var isOdd: Bool {
         return (self & 0x01) != 0
     }
 }
 
 public extension Date {
-    public init(ms: Int64) {
+    init(ms: Int64) {
         self.init(timeIntervalSince1970: Double(ms) / 1000)
     }
-    public var ms: Int64 {
+    var ms: Int64 {
         return Int64((timeIntervalSince1970 * 1000).rounded())
     }
 }
 
 public extension Data {
-    public var makeString: String? {
+    var makeString: String? {
         return String(data: self, encoding: .utf8)
+    }
+    
+    mutating func withUnsafeMutableBytePointer<R>(_ code: Fun11x<UnsafeMutablePointer<UInt8>, R>) rethrows -> R {
+        return try withUnsafeMutableBytes { (buf: UnsafeMutableRawBufferPointer) throws -> R in
+            return try code(UnsafeMutablePointer(OpaquePointer(buf.baseAddress!)))
+        }
+    }
+
+    func withUnsafeBytePointer<R>(_ code: Fun11x<UnsafePointer<UInt8>, R>) rethrows -> R {
+        return try withUnsafeBytes { (buf: UnsafeRawBufferPointer) throws -> R in
+            return try code(UnsafePointer(OpaquePointer(buf.baseAddress!)))
+        }
     }
 }
 
@@ -40,34 +52,34 @@ public extension DispatchTime {
     /**
      Create a dispatch time for a given seconds from now.
      */
-    public init(seconds: Double) {
+    init(seconds: Double) {
         let nanos = UInt64((seconds * Double(1_000_000_000)).rounded())
         let uptime = DispatchTime.now().uptimeNanoseconds + nanos
         self.init(uptimeNanoseconds: uptime)
     }
-    public init(ms: Int) {
+    init(ms: Int) {
         let uptime = DispatchTime.now().uptimeNanoseconds + (UInt64(ms) * 1000 * 1000)
         self.init(uptimeNanoseconds: uptime)
     }
 }
 
 public extension DispatchSemaphore {
-    public func wait(seconds: Double) -> DispatchTimeoutResult {
+    func wait(seconds: Double) -> DispatchTimeoutResult {
         let time = DispatchTime(seconds: seconds)
         return self.wait(timeout: time)
     }
-    public func wait(ms: Int) -> DispatchTimeoutResult {
+    func wait(ms: Int) -> DispatchTimeoutResult {
         let time = DispatchTime(ms: ms)
         return self.wait(timeout: time)
     }
 }
 
 public extension DispatchGroup {
-    public func wait(seconds: Double) -> DispatchTimeoutResult {
+    func wait(seconds: Double) -> DispatchTimeoutResult {
         let time = DispatchTime(seconds: seconds)
         return self.wait(timeout: time)
     }
-    public func wait(ms: Int) -> DispatchTimeoutResult {
+    func wait(ms: Int) -> DispatchTimeoutResult {
         let time = DispatchTime(ms: ms)
         return self.wait(timeout: time)
     }
@@ -77,36 +89,36 @@ public extension String {
     
     private static let WHITESPACES = CharacterSet(charactersIn: " \t\n\r")
     
-    public func substring(to offset: Int) -> String {
+    func substring(to offset: Int) -> String {
         return String(self[self.startIndex..<self.index(self.startIndex, offsetBy: offset)])
     }
     
-    public func substring(from offset: Int) -> String {
+    func substring(from offset: Int) -> String {
         return String(self[self.index(self.startIndex, offsetBy: offset)..<self.endIndex])
     }
     
-    public func substring(from start: Int, to end: Int) -> String {
+    func substring(from start: Int, to end: Int) -> String {
         let s = self.index(startIndex, offsetBy: start)
         let e = (end >= 0 ? self.index(startIndex, offsetBy: end) : self.index(endIndex, offsetBy: end))
         return String(self[s..<e])
     }
     
-    public func trimmed() -> String {
+    func trimmed() -> String {
         return self.trimmingCharacters(in: String.WHITESPACES)
     }
     
-    public var lines: Array<String> {
+    var lines: Array<String> {
         return self.components(separatedBy: TextUtil.LINESEP) // Keeping empty segments.
         //#BEGIN NOTE This get weird when input contains \r\n, it does not consider \n in \r\n as a separator.
         //        return self.split(separator: TextUtil.LINESEP.first!, omittingEmptySubsequences: false).map { String($0) }
         //#END NOTE
     }
     
-    public var data: Data {
+    var data: Data {
         return Data(self.utf8)
     }
     
-    public var bytes: Bytes {
+    var bytes: Bytes {
         return Array(utf8)
     }
 }
@@ -134,38 +146,38 @@ public extension Sequence {
 
 public extension Array {
     // Create an empty array, but reserve the specified capacity.
-    public init(reserve: Int) {
+    init(reserve: Int) {
         self.init()
         self.reserveCapacity(reserve)
     }
-    public init(_ s: Array, _ start: Int, _ end: Int) {
+    init(_ s: Array, _ start: Int, _ end: Int) {
         self.init()
         append(s, start, end)
     }
-    public mutating func append(_ a: Array, _ start: Int, _ end: Int) {
+    mutating func append(_ a: Array, _ start: Int, _ end: Int) {
         append(contentsOf: a[start..<end])
     }
-    public mutating func append(_ a: Array) {
+    mutating func append(_ a: Array) {
         append(a, 0, a.count)
     }
-    public mutating func setLength(_ length: Int) {
+    mutating func setLength(_ length: Int) {
         removeSubrange(length..<self.count)
     }
 }
 
 public extension Array where Element: Hashable {
-    public func toSet() -> Set<Element> {
+    func toSet() -> Set<Element> {
         return Set(self)
     }
 }
 
 public extension Array where Element==String {
     /// @return A new string with elements joined by linebreaks.
-    public func joinln() -> String {
+    func joinln() -> String {
         return joined(separator: TextUtil.LINESEP)
     }
     
-    public func joinPath() -> String {
+    func joinPath() -> String {
         return joined(separator: File.SEP)
     }
 }
@@ -175,14 +187,14 @@ public extension Dictionary {
     /// Add entries from the other dictionary.
     /// Use new value on duplicated key.
     @discardableResult
-    public mutating func add(_ other: Dictionary<Key, Value>) -> Dictionary<Key, Value> {
+    mutating func add(_ other: Dictionary<Key, Value>) -> Dictionary<Key, Value> {
         merge(other, uniquingKeysWith: { a, b in return b })
         return self
     }
     
     /// Create a new dictionary with mapped value.
     /// @param transform(key, value) -> newvalue? If newvalue is not nil, added (key: newvalue) to the result.
-    public func map(_ transform: Fun21<Key, Value, Value?>) -> Dictionary<Key, Value> {
+    func map(_ transform: Fun21<Key, Value, Value?>) -> Dictionary<Key, Value> {
         var ret = Dictionary<Key,Value>()
         for (k, v) in self {
             if let value = transform(k, v) {
@@ -200,7 +212,7 @@ extension InputStream: IInputStream {
 }
 
 public extension Int {
-    public struct ASCII {
+    struct ASCII {
         public static let NULL = 0
         public static let SOH = 1
         public static let STX = 2
@@ -333,7 +345,7 @@ public extension Int {
 }
 
 public extension Character {
-    public struct ASCII {
+    struct ASCII {
         public static let SLASH: Character = "/"
         public static let DOT: Character = "."
     }

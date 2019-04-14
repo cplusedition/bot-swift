@@ -44,6 +44,11 @@ open class GA: Comparable, Hashable {
         return result
     }
     
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(groupId)
+        hasher.combine(artifactId)
+    }
+    
     /**
      * Create GA from path in forms:
      * group/artifact
@@ -178,6 +183,12 @@ open class GAV: Comparable, Hashable {
         result = result << 5 ^ artifactId.hashValue
         result = result << 5 ^ version.hashValue
         return result
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(groupId)
+        hasher.combine(artifactId)
+        hasher.combine(version)
     }
     
     /**
@@ -345,6 +356,10 @@ open class ArtifactVersion: Comparable, Hashable {
     
     public var hashValue: Int {
         return unparsed.hashValue
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(unparsed)
     }
     
     public class InvalidVersionException : Exception {

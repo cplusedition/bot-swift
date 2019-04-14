@@ -129,7 +129,7 @@ public protocol ICoreLogger : ILog {
      * Like enter(name, msg, code), but invoke leaveX() instead of leave() on leave.
      * @throws IllegalStateException
      */
-    func enterX<T>(_ name: String?, _ msg: String?, _ code: Fun01x<T>) throws -> T?
+    func enterX<T>(_ name: String?, _ msg: String?, _ code: Fun01x<T>) throws -> T
 
     /**
      * Leave a scope.
@@ -149,51 +149,51 @@ public protocol ICoreLogger : ILog {
 // Shortcuts.
 public extension ICoreLogger {
 
-    public func enter(_ name: String? = nil) {
+    func enter(_ name: String? = nil) {
         enter(name, nil)
     }
     
-    public func enter(_ name: String? = nil, _ code: Fun00) {
+    func enter(_ name: String? = nil, _ code: Fun00) {
         enter(name, nil, code)
     }
     
-    public func enter<T>(_ name: String? = nil, _ code: Fun01<T>) -> T {
+    func enter<T>(_ name: String? = nil, _ code: Fun01<T>) -> T {
         return enter(name, nil, code)
     }
     
-    public func enter(_ c: AnyClass, _ msg: String? = nil) {
+    func enter(_ c: AnyClass, _ msg: String? = nil) {
         enter("\(c)", msg)
     }
     
-    public func enter(_ c: AnyClass, _ msg: String? = nil, _ code: Fun00) {
+    func enter(_ c: AnyClass, _ msg: String? = nil, _ code: Fun00) {
         enter("\(c)", msg, code)
     }
     
-    public func enter<T>(_ c: AnyClass, _ msg: String? = nil, _ code: Fun01<T>) -> T {
+    func enter<T>(_ c: AnyClass, _ msg: String? = nil, _ code: Fun01<T>) -> T {
         return enter("\(c)", msg, code)
     }
     
-    public func enterX(_ name: String? = nil, _ code: Fun00x) throws {
+    func enterX(_ name: String? = nil, _ code: Fun00x) throws {
         try enterX(name, nil, code)
     }
     
-    public func enterX<T>(_ name: String? = nil, _ code: Fun01x<T>) throws -> T? {
+    func enterX<T>(_ name: String? = nil, _ code: Fun01x<T>) throws -> T? {
         return try enterX(name, nil, code)
     }
     
-    public func enterX(_ c: AnyClass, _ msg: String? = nil, _ code: Fun00x) throws {
+    func enterX(_ c: AnyClass, _ msg: String? = nil, _ code: Fun00x) throws {
         try enterX("\(c)", msg, code)
     }
 
-    public func enterX<T>(_ c: AnyClass, _ msg: String? = nil, _ code: Fun01x<T>) throws -> T? {
+    func enterX<T>(_ c: AnyClass, _ msg: String? = nil, _ code: Fun01x<T>) throws -> T? {
         return try enterX("\(c)", msg, code)
     }
 
-    public func leave() {
+    func leave() {
         leave(nil)
     }
     
-    public func leaveX() throws {
+    func leaveX() throws {
         try leaveX(nil)
     }
     
@@ -201,7 +201,7 @@ public extension ICoreLogger {
      * Check that at least one error occurs in code().
      * If so, clear the error status, otherwise log an error.
      */
-    public func expectError(_ msg: String, _ code: @escaping Fun00) {
+    func expectError(_ msg: String, _ code: @escaping Fun00) {
         enter(nil, nil) {
             code()
             if (resetErrorCount() == 0) {
@@ -334,17 +334,30 @@ open class CoreLogger: ICoreLogger {
         /// @throws IllegalStateException
         func leaveX(_ msg: String?) throws {
             let time = DateUtil.ms
-            return try executor.sync {
+            try executor.sync {
                 if (errorCount > 0) {
-                    let info = callStack.peek()!
+                    let m = U.join(callStack.peek()!.name, msg)
                     leave1(msg, time)
-                    throw IllegalStateException(info.name ?? "")
+                    throw IllegalStateException(m)
                 } else {
                     leave1(msg, time)
                 }
             }
         }
 
+        /// @throws IllegalStateException
+        func leaveXX(_ msg: String?, _ e: Error) -> Error {
+            let time = DateUtil.ms
+            return executor.sync {
+                self.errorCount += 1
+                self.flushall()
+                let m = U.join(callStack.peek()!.name, msg)
+                self.log1(m, e, time, nil)
+                leave1(msg, time)
+                return IllegalStateException(m)
+            }
+        }
+        
         func quiet(_ code: Fun00) {
             executor.async {
                 self.quietStack.push(self.quiet)
@@ -659,19 +672,18 @@ open class CoreLogger: ICoreLogger {
         do {
             try code()
         } catch let e {
-            self.e(name ?? "", e)
+            self.e(U.join(name, msg), e)
         }
         try leaveX(msg)
     }
 
-    public func enterX<T>(_ name: String? = nil, _ msg: String? = nil, _ code: Fun01x<T>) throws -> T? {
+    public func enterX<T>(_ name: String? = nil, _ msg: String? = nil, _ code: Fun01x<T>) throws -> T {
         delegate.enter(name, msg)
-        let ret: T?
+        let ret: T
         do {
             ret = try code()
         } catch let e {
-            self.e(name ?? "", e)
-            ret = nil
+            throw delegate.leaveXX(msg, e)
         }
         try leaveX(msg)
         return ret
@@ -684,6 +696,17 @@ open class CoreLogger: ICoreLogger {
 
     public func leaveX(_ msg: String? = nil) throws {
         try delegate.leaveX(msg)
+    }
+}
+
+fileprivate struct U {
+    static func join(_ name: String?, _ msg: String?) -> String {
+        var ret = name ?? ""
+        if let m = msg {
+            ret.append(": ")
+            ret.append(m)
+        }
+        return ret
     }
 }
 

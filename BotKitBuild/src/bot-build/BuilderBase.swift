@@ -33,7 +33,7 @@ open class BuilderBase: XCTestCase, IBasicBuilder {
     }()
     
     static let GROUP = "com.cplusedition.bot"
-    static let VERSION = "1.3"
+    static let VERSION = "1.4"
     
     class Workspace : BasicWorkspace {
         static var singleton = Workspace()

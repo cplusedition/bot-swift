@@ -43,7 +43,7 @@ class TestCoreUtilExtensionUtil01: TestBase {
             }
         }
         subtest("Data") {
-            XCTAssertEqual("123", Data(bytes: [0x31, 0x32, 0x33]).makeString)
+            XCTAssertEqual("123", Data([0x31, 0x32, 0x33]).makeString)
         }
         subtest("DispatchSemaphore") {
             self.subtest {
@@ -138,7 +138,7 @@ class TestCoreUtilExtensionUtil01: TestBase {
         }
         subtest("data") {
             XCTAssertTrue(Data() == "".data)
-            XCTAssertTrue(Data(bytes: [0x31, 0x32, 0x33]) == "123".data)
+            XCTAssertTrue(Data([0x31, 0x32, 0x33]) == "123".data)
         }
         subtest("data") {
             XCTAssertTrue([UInt8]() == "".bytes)

@@ -45,7 +45,7 @@ class TestCoreUtilRandUtil01: TestBase {
                 }
             }
             self.log.d("# dups = \(dups)")
-            XCTAssertTrue(dups < 5)
+            XCTAssertTrue(dups < 10)
         }
         subtest("Data") {
             var set : Set<Data> = Set();

@@ -19,9 +19,9 @@
 
 /** Tasks that does not require a builder. */
 public protocol ICoreTask: AnyObject {
-    associatedtype Result
+    associatedtype R
     var log: ICoreLogger { get set }
-    func run() -> Result
+    func run() -> R
 }
 
 /** Tasks that works with a builder. */
@@ -33,9 +33,7 @@ public protocol IBuilderTask : ICoreTask {
 
 /** Tasks that do not depend on builder. */
 open class CoreTask<T>: ICoreTask {
-
-    public typealias Result = T
-
+    public typealias R = T
     private var _log: ICoreLogger? = nil
     public var log: ICoreLogger {
         get {
@@ -61,7 +59,7 @@ open class CoreTask<T>: ICoreTask {
     }
 
     @discardableResult
-    open func run() -> T {
+    open func run() -> R {
         preconditionFailure("TBI")
     }
 }
@@ -70,8 +68,7 @@ open class CoreTask<T>: ICoreTask {
 
 open class BuilderTask<T>: IBuilderTask {
 
-    public typealias Result = T
-    
+    public typealias R = T
     private var _builder: IBuilder? = nil
     private var _log: ICoreLogger? = nil
     public var builder: IBuilder {
@@ -106,7 +103,7 @@ open class BuilderTask<T>: IBuilderTask {
     }
 
     @discardableResult
-    open func run() -> T {
+    open func run() -> R {
         preconditionFailure("TBI")
     }
 }
@@ -202,7 +199,7 @@ open class Copy: CoreTask<Copy.Result> {
         return _result
     }
     
-    public class Result {
+    public struct Result {
         public var copied = Array<String>()
         public var copyFailed = Array<String>()
         
@@ -281,7 +278,7 @@ open class CopyDiff: CoreTask<CopyDiff.Result> {
         return _result
     }
 
-    public class Result {
+    public struct Result {
         public var notCopied = Array<String>()
         public var copied = Array<String>()
         public var copyFailed = Array<String>()
@@ -294,6 +291,7 @@ open class CopyDiff: CoreTask<CopyDiff.Result> {
                 .toString()
         }
     }
+    
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -400,11 +398,11 @@ open class CopyMirror: CoreTask<CopyMirror.Result> {
         public var notCopied = Array<String>()
         public var copied = Array<String>()
         public var copyFailed = Array<String>()
-
+        
         public func toString() -> String {
             return toString(notcopied: false)
         }
-
+        
         /** Default prints everything except not copied. */
         public func toString(
             notcopied: Bool = false,
@@ -413,7 +411,7 @@ open class CopyMirror: CoreTask<CopyMirror.Result> {
             copied: Bool = true,
             failed: Bool = true,
             withempty: Bool = true
-        ) -> String {
+            ) -> String {
             return tostring(
                 notcopied,
                 extras,
@@ -423,7 +421,7 @@ open class CopyMirror: CoreTask<CopyMirror.Result> {
                 withempty
             )
         }
-
+        
         /** Default prints nothing. */
         public func toString0(
             notcopied: Bool = false,
@@ -432,7 +430,7 @@ open class CopyMirror: CoreTask<CopyMirror.Result> {
             copied: Bool = false,
             failed: Bool = false,
             withempty: Bool = true
-        ) -> String {
+            ) -> String {
             return tostring(
                 notcopied,
                 extras,
@@ -442,7 +440,7 @@ open class CopyMirror: CoreTask<CopyMirror.Result> {
                 withempty
             )
         }
-
+        
         private func tostring(
             _ notcopied: Bool,
             _ extras: Bool,
@@ -464,8 +462,8 @@ open class CopyMirror: CoreTask<CopyMirror.Result> {
                 .toString()
         }
     }
+    
 }
-
 
 //////////////////////////////////////////////////////////////////////
 

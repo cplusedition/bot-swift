@@ -41,9 +41,9 @@ class TestByteIOUtil02: TestBase {
             let count = 200
             var data = Data(count: 0)
             for i in 0..<count {
-                data.count = i+1
-                data.withUnsafeMutableBytes { (ptr: UnsafeMutablePointer<UInt8>)  -> Void in
-                    (ptr+i).pointee = UInt8(i)
+                data.count = i + 1
+                data.withUnsafeMutableBytePointer { (ptr: UnsafeMutablePointer<UInt8>)  -> Void in
+                    (ptr + i).pointee = UInt8(i)
                 }
             }
             for i in 0..<count {

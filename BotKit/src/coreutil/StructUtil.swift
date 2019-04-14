@@ -56,13 +56,13 @@ public struct MySeq<T> {
 }
 
 public extension MySeq where T: Equatable {
-    public func toArray() -> Array<T> {
+    func toArray() -> Array<T> {
         return array
     }
 }
 
 public extension MySeq where T: Hashable {
-    public func toSet() -> Set<T> {
+    func toSet() -> Set<T> {
         return Set(self)
     }
 }

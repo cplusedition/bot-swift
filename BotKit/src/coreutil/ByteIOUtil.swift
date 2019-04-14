@@ -25,7 +25,7 @@ public protocol IInputStream {
 }
 
 public extension IInputStream {
-    public func readAsMuchAsPossible(_ ptr: UnsafeMutablePointer<UInt8>, _ length: Int) -> Int {
+    func readAsMuchAsPossible(_ ptr: UnsafeMutablePointer<UInt8>, _ length: Int) -> Int {
         var len = length
         var off = 0
         while (len > 0) {
@@ -39,7 +39,7 @@ public extension IInputStream {
     }
     
     /** Like readFully(), except that it allow partial reads if EOF is reached, and returns number of bytes read. */
-    public func readAsMuchAsPossible(_ ret: inout [UInt8], _ offset: Int, _ length: Int) -> Int {
+    func readAsMuchAsPossible(_ ret: inout [UInt8], _ offset: Int, _ length: Int) -> Int {
         var len = length
         let end = offset + len
         if end > ret.count {
@@ -51,17 +51,17 @@ public extension IInputStream {
     }
     
     /** Like readFully(), except that it allow partial reads if EOF is reached, and returns number of bytes read. */
-    public func readAsMuchAsPossible(_ ret: inout Data, _ offset: Int, _ length: Int) -> Int {
+    func readAsMuchAsPossible(_ ret: inout Data, _ offset: Int, _ length: Int) -> Int {
         let end = offset + length
         if ret .count < end {
             ret.count = end
         }
-        return ret.withUnsafeMutableBytes { (ptr: UnsafeMutablePointer<UInt8>) -> Int in
+        return ret.withUnsafeMutableBytePointer { (ptr: UnsafeMutablePointer<UInt8>) -> Int in
             return readAsMuchAsPossible(ptr + offset, length)
         }
     }
     
-    public func readFully(_ ptr: UnsafeMutablePointer<UInt8>, _ length: Int) throws {
+    func readFully(_ ptr: UnsafeMutablePointer<UInt8>, _ length: Int) throws {
         var len = length
         var off = 0
         while (len > 0) {
@@ -73,12 +73,12 @@ public extension IInputStream {
         }
     }
     
-    public func readFully(_ ret: inout [UInt8]) throws {
+    func readFully(_ ret: inout [UInt8]) throws {
         try readFully(&ret, 0, ret.count);
     }
     
     /// Note that an exception is thrown if offset + length is beyond ret.count.
-    public func readFully(_ ret: inout [UInt8], _ offset: Int, _ length: Int) throws {
+    func readFully(_ ret: inout [UInt8], _ offset: Int, _ length: Int) throws {
         let end = offset + length
         if end > ret.count {
             throw IllegalArgumentException("limit=\(ret.count), offset=\(offset), length=\(length)")
@@ -87,30 +87,30 @@ public extension IInputStream {
         try readFully(ptr + offset, length)
     }
     
-    public func readFully(_ ret: inout Data) throws {
+    func readFully(_ ret: inout Data) throws {
         try readFully(&ret, 0, ret.count);
     }
     
     /// Note that ret is grow to offset + length to accomodate all the data if neccessary.
-    public func readFully(_ ret: inout Data, _ offset: Int, _ length: Int) throws {
+    func readFully(_ ret: inout Data, _ offset: Int, _ length: Int) throws {
         let end = offset + length
         if ret .count < end {
             ret.count = end
         }
-        try ret.withUnsafeMutableBytes { (ptr: UnsafeMutablePointer<UInt8>) -> Void in
+        try ret.withUnsafeMutableBytePointer { (ptr: UnsafeMutablePointer<UInt8>) -> Void in
             try readFully(ptr + offset, length)
         }
     }
     
     /// Read whole input stream
-    public func asData() throws -> Data {
+    func asData() throws -> Data {
         let len = ByteIOUtil.K.BUFSIZE
         var ret = Data(count: len)
         var total = 0
         var n = 0
         repeat {
             let retcount = ret.count
-            try ret.withUnsafeMutableBytes { (ptr: UnsafeMutablePointer<UInt8>) -> Void in
+            try ret.withUnsafeMutableBytePointer { (ptr: UnsafeMutablePointer<UInt8>) -> Void in
                 n = readAsMuchAsPossible(ptr + total, retcount - total)
                 if n < 0 { throw ReadException() }
                 total += n
@@ -123,7 +123,7 @@ public extension IInputStream {
         return ret
     }
     
-    public func asString(encoding: String.Encoding = .utf8) throws -> String {
+    func asString(encoding: String.Encoding = .utf8) throws -> String {
         let data = try asData()
         guard let ret = String(data: data, encoding: encoding) else { throw CharacterEncodingException() }
         return ret
@@ -140,7 +140,7 @@ public protocol IOutputStream {
 }
 
 public extension IOutputStream {
-    public func writeFully(_ ptr: UnsafePointer<UInt8>, _ length: Int) throws {
+    func writeFully(_ ptr: UnsafePointer<UInt8>, _ length: Int) throws {
         var len = length
         var off = 0
         while (len > 0) {
@@ -152,27 +152,27 @@ public extension IOutputStream {
         }
     }
     
-    public func writeFully(_ data: Data) throws {
+    func writeFully(_ data: Data) throws {
         try writeFully(data, 0, data.count)
     }
     
-    public func writeFully(_ data: Data, _ offset: Int, _ length: Int) throws {
-        try data.withUnsafeBytes { (ptr: UnsafePointer<UInt8>) -> Void in
+    func writeFully(_ data: Data, _ offset: Int, _ length: Int) throws {
+        try data.withUnsafeBytePointer { (ptr: UnsafePointer<UInt8>) -> Void in
             try writeFully(ptr + offset, length)
         }
     }
     
-    public func writeFully(_ data: [UInt8]) throws {
+    func writeFully(_ data: [UInt8]) throws {
         let ptr = UnsafePointer(data)
         try writeFully(ptr, data.count)
     }
     
-    public func writeFully(_ data: [UInt8], _ offset: Int, _ length: Int) throws {
+    func writeFully(_ data: [UInt8], _ offset: Int, _ length: Int) throws {
         let ptr = UnsafePointer(data)
         try writeFully(ptr + offset, length)
     }
     
-    public func writeFully(_ string: String, _ encoding: String.Encoding = .utf8) throws {
+    func writeFully(_ string: String, _ encoding: String.Encoding = .utf8) throws {
         guard let data = string.data(using: encoding) else {
             throw CharacterEncodingException()
         }
@@ -243,7 +243,7 @@ open class ByteInputStream: IInputStream {
             self.data = data
         }
         init(bytes: [UInt8]) {
-            self.data = Data(bytes: bytes)
+            self.data = Data(bytes)
         }
         func read(_ buffer: UnsafeMutablePointer<UInt8>, maxLength len: Int) -> Int {
             let available = data.count - position
@@ -272,10 +272,10 @@ public protocol IBufferedInputStream: IInputStream {
 }
 
 public extension IBufferedInputStream {
-    public func readline() throws -> String? {
+    func readline() throws -> String? {
         return try readline(.utf8)
     }
-    public func readline(_ encoding: String.Encoding) throws -> String? {
+    func readline(_ encoding: String.Encoding) throws -> String? {
         var line = Bytes(reserve: 256)
         var prev: Byte? = nil
         while let byte = try self.read() {
@@ -361,7 +361,7 @@ open class BufferedInputStream: IBufferedInputStream {
     }
     private func fill() -> Int {
         let count = _buf.count
-        return _buf.withUnsafeMutableBytes { (ptr: UnsafeMutablePointer<UInt8>) -> Int in
+        return _buf.withUnsafeMutableBytePointer { (ptr: UnsafeMutablePointer<UInt8>) -> Int in
             return _input.read(ptr, maxLength: count)
         }
     }

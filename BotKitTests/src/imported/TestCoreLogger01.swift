@@ -200,7 +200,7 @@ class TestCoreLogger01 : TestBase {
 
             let log = CoreLogger(debugging: true)
             XCTAssertEqual(
-                "OK",
+                "OK" as String?,
                 try log.enterX(#function) {
                     try log.enterX(#function, "msg") {
                         try log.enterX(TestCoreLogger01.self) {
@@ -217,7 +217,7 @@ class TestCoreLogger01 : TestBase {
                             }
                         }
                     }
-                }!)
+                })
             let file = FileUtil.tempFile()
             try log.saveLog(file)
             /// Note that this is a sync call and thus make sure savelog() is completed.

@@ -34,7 +34,7 @@ public extension FilesetCollector {
     /**
      * Collect only files.
      */
-    public func files(_ bottomup: Bool = false, _ includes: IFilePathPredicate? = nil) -> MySeq<T>  {
+    func files(_ bottomup: Bool = false, _ includes: IFilePathPredicate? = nil) -> MySeq<T>  {
         return collect(bottomup) { file, rpath in
             return file.isFile && (includes?(file, rpath) ?? true)
         }
@@ -43,7 +43,7 @@ public extension FilesetCollector {
     /**
      * Collect only directories.
      */
-    public func dirs(_ bottomup: Bool = false, _ includes: IFilePathPredicate? = nil) -> MySeq<T>  {
+    func dirs(_ bottomup: Bool = false, _ includes: IFilePathPredicate? = nil) -> MySeq<T>  {
         return collect(bottomup) { file, rpath in
             return file.isDirectory && (includes?(file, rpath) ?? true)
         }
@@ -90,14 +90,14 @@ public extension IFileset {
     /**
      * Shortcut collect() to returns only files, not directories.
      */
-    public func files(_ bottomup: Bool = false) -> MySeq<(File, String)> {
+    func files(_ bottomup: Bool = false) -> MySeq<(File, String)> {
         return collect(bottomup) { file, _ in file.isFile }
     }
 
     /**
      * Shortcut collect() to returns only directories.
      */
-    public func dirs(_ bottomup: Bool = false) -> MySeq<(File, String)> {
+    func dirs(_ bottomup: Bool = false) -> MySeq<(File, String)> {
         return collect(bottomup) { file, _ in file.isDirectory }
     }
 }

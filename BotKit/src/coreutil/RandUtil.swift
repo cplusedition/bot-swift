@@ -15,78 +15,115 @@
  *
  */
 
+import Foundation
+
 public struct RandUtil {
     
     private static let UMAX = UInt(Int.max)
     private static let ALPHANUM = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".data(using: .ascii)!;
-
-    public static func get(to : UnsafeMutablePointer<UInt8>, length: Int) {
-        let rc = SecRandomCopyBytes(kSecRandomDefault, length, to)
-        precondition(rc == 0, "# rc=\(rc)")
+    
+    private static let queue = DispatchQueue(label: "r")
+    
+    public static func get(to : UnsafeMutableRawPointer, length: Int) {
+        queue.sync {
+            U.get(to: to, length: length)
+        }
     }
     
-   public static func get(to : inout [UInt8]) {
-        let rc = SecRandomCopyBytes(kSecRandomDefault, to.count, &to)
-        precondition(rc == 0, "# rc=\(rc)")
+    public static func get(to : inout [UInt8]) {
+        queue.sync {
+            U.get(to: &to)
+        }
     }
     
-   public static func get(to: inout Data) {
-        let count = to.count;
-        to.withUnsafeMutableBytes { (buf:UnsafeMutablePointer<UInt8>) -> Void in
-            let rc = SecRandomCopyBytes(kSecRandomDefault, count, buf)
-            precondition(rc == 0, "# rc=\(rc)")
+    public static func get(to: inout Data) {
+        queue.sync {
+            U.get(to: &to)
         }
     }
     
     public static func getBool() -> Bool {
-        var ret = UInt8(0)
-        get(to: &ret, length: 1)
-        return (ret & 0x1) == 1
+        return queue.sync {
+            var ret = UInt8(0)
+            U.get(to: &ret, length: 1)
+            return (ret & 0x1) == 1
+        }
     }
-
+    
     public static func getInt32() -> Int32 {
-        return Int32(bitPattern: getUInt32())
+        return queue.sync {
+            return Int32(bitPattern: U.getUInt32())
+        }
     }
     
     public static func getUInt32() -> UInt32 {
-        var to = Data(count: 4)
-        return to.withUnsafeMutableBytes { (buf:UnsafeMutablePointer<UInt8>) -> UInt32 in
-            let rc = SecRandomCopyBytes(kSecRandomDefault, 4, buf)
-            precondition(rc == 0, "rc=\(rc),");
-            return shift(buf[0], 24) | shift(buf[1], 16) | shift(buf[2], 8) | UInt32(buf[3])
+        return queue.sync {
+            return U.getUInt32()
         }
     }
-        
+    
     /// Return an UInt32 in range (min..<max]
     public static func getUInt32(_ min: UInt32, _ max: UInt32) -> UInt32 {
-        precondition(min < max)
-        return min + getUInt32() % (max - min)
+        return queue.sync {
+            precondition(min < max)
+            return min + U.getUInt32() % (max - min)
+        }
     }
     
     public static func getBytes(_ count: Int) -> [UInt8] {
-        var ret = [UInt8](repeating: 0, count: count)
-        get(to: &ret)
-        return ret
+        return queue.sync {
+            var ret = [UInt8](repeating: 0, count: count)
+            U.get(to: &ret)
+            return ret
+        }
     }
     
     public static func getData(_ count: Int) -> Data {
-        var ret = Data(count: count)
-        get(to: &ret)
-        return ret
+        return queue.sync {
+            var ret = Data(count: count)
+            U.get(to: &ret)
+            return ret
+        }
     }
     
     /**
      * @return A word that consists of only [0-9,a-z,A-Z]
      */
-   public static func getWord(length: Int) -> String  {
-        var buf = [UInt8](repeating: 0, count: length);
-        RandUtil.get(to: &buf);
-        let ret = buf.map { b in return ALPHANUM[Int(b % 62)]}
-        return String(bytes: ret, encoding: .ascii)!
-    }
-
-    private static func shift(_ value: UInt8, _ shift: UInt32) -> UInt32 {
-        return UInt32(value) << shift;
+    public static func getWord(length: Int) -> String  {
+        return queue.sync {
+            var buf = [UInt8](repeating: 0, count: length);
+            U.get(to: &buf);
+            let ret = buf.map { b in return RandUtil.ALPHANUM[Int(b % 62)]}
+            return String(bytes: ret, encoding: .ascii)!
+        }
     }
     
+    fileprivate struct U {
+        static func get(to : UnsafeMutableRawPointer, length: Int) {
+            let rc = SecRandomCopyBytes(kSecRandomDefault, length, to)
+            precondition(rc == 0, "# rc=\(rc)")
+        }
+        static func get(to : inout [UInt8]) {
+            let rc = SecRandomCopyBytes(kSecRandomDefault, to.count, &to)
+            precondition(rc == 0, "# rc=\(rc)")
+        }
+        static func get(to: inout Data) {
+            let count = to.count;
+            to.withUnsafeMutableBytes { (buf: UnsafeMutableRawBufferPointer) -> Void in
+                let rc = SecRandomCopyBytes(kSecRandomDefault, count, buf.baseAddress!)
+                precondition(rc == 0, "# rc=\(rc)")
+            }
+        }
+        static func getUInt32() -> UInt32 {
+            var to = Data(count: 4)
+            return to.withUnsafeMutableBytes { (buf: UnsafeMutableRawBufferPointer) -> UInt32 in
+                let rc = SecRandomCopyBytes(kSecRandomDefault, 4, buf.baseAddress!)
+                precondition(rc == 0, "rc=\(rc),");
+                return shift(buf[0], 24) | shift(buf[1], 16) | shift(buf[2], 8) | UInt32(buf[3])
+            }
+        }
+        private static func shift(_ value: UInt8, _ shift: UInt32) -> UInt32 {
+            return UInt32(value) << shift;
+        }
+    }
 }
