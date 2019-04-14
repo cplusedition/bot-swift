@@ -109,15 +109,15 @@ public struct RandUtil {
         }
         static func get(to: inout Data) {
             let count = to.count;
-            to.withUnsafeMutableBytes { (buf: UnsafeMutableRawBufferPointer) -> Void in
-                let rc = SecRandomCopyBytes(kSecRandomDefault, count, buf.baseAddress!)
+            to.withUnsafeMutableBytes { (buf: UnsafeMutablePointer<UInt8>) -> Void in
+                let rc = SecRandomCopyBytes(kSecRandomDefault, count, buf)
                 precondition(rc == 0, "# rc=\(rc)")
             }
         }
         static func getUInt32() -> UInt32 {
             var to = Data(count: 4)
-            return to.withUnsafeMutableBytes { (buf: UnsafeMutableRawBufferPointer) -> UInt32 in
-                let rc = SecRandomCopyBytes(kSecRandomDefault, 4, buf.baseAddress!)
+            return to.withUnsafeMutableBytes { (buf: UnsafeMutablePointer<UInt8>) -> UInt32 in
+                let rc = SecRandomCopyBytes(kSecRandomDefault, 4, buf)
                 precondition(rc == 0, "rc=\(rc),");
                 return shift(buf[0], 24) | shift(buf[1], 16) | shift(buf[2], 8) | UInt32(buf[3])
             }

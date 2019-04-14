@@ -36,14 +36,14 @@ public extension Data {
     }
     
     mutating func withUnsafeMutableBytePointer<R>(_ code: Fun11x<UnsafeMutablePointer<UInt8>, R>) rethrows -> R {
-        return try withUnsafeMutableBytes { (buf: UnsafeMutableRawBufferPointer) throws -> R in
-            return try code(UnsafeMutablePointer(OpaquePointer(buf.baseAddress!)))
+        return try withUnsafeMutableBytes { (buf: UnsafeMutablePointer<UInt8>) throws -> R in
+            return try code(buf)
         }
     }
 
     func withUnsafeBytePointer<R>(_ code: Fun11x<UnsafePointer<UInt8>, R>) rethrows -> R {
-        return try withUnsafeBytes { (buf: UnsafeRawBufferPointer) throws -> R in
-            return try code(UnsafePointer(OpaquePointer(buf.baseAddress!)))
+        return try withUnsafeBytes { (buf: UnsafePointer<UInt8>) throws -> R in
+            return try code(buf)
         }
     }
 }
